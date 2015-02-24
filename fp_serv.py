@@ -53,6 +53,23 @@ def allFoodPlaces():
 		data.append({"restaurant": row[1], "building": row[2], "Longitude": float(row[3]), "Latitude": float(row[4])})
 
 	return json.dumps(data)
+	
+#Get the review and rating for a given food place
+@route('/review+rating&id=<id:int>')
+def reviewRating(id):
+	reviews = conn.cursor()
+	
+	#Query for a food place's reviews and ratings
+	reviews.execute("SELECT * FROM review WHERE restaurantID=?", (id,))
+	
+	#JSON array to store all JSON objeccts
+	data = []
+	
+	#Store each row of data as a JSON objet into the JSON array
+	for row in reviews:
+		data.append({"review": row[2], "rating": row[3], "timestamp": row[4], "user": row[5]})
+	
+	return json.dumps(data)
 
 run(host = "localhost", port = 8080)
 
