@@ -71,7 +71,7 @@ def echotest():
 # ############### ADMIN CLIENT API's ############### #
 
 # Register a new admin to the hub
-@route('/register&user=<user>&pwd=<pwd>&placeName=<name>')
+@post('/register&user=<user>&pwd=<pwd>&placeName=<name>')
 def register(user, pwd, name):
 	newID = 0
 
@@ -99,7 +99,7 @@ def register(user, pwd, name):
 	return json.dumps(ack)
 
 # Log in an admin to the hub
-@route('/login&user=<user>&pwd=<pwd>')
+@post('/login&user=<user>&pwd=<pwd>')
 def login(user, pwd):
 	#Search for the user with the specified password
 	cursor.execute("SELECT * FROM loginCredentials WHERE user = ? AND password = ?", (user,pwd,))
@@ -118,7 +118,7 @@ def login(user, pwd):
 	
 	return json.dumps(ack)
 	
-@route('/addDetails&placeID=<id:int>&description=<desc>&cuisineType=<cuisType>&hoursOfOperation=<hoursOp>')
+@post('/addDetails&placeID=<id:int>&description=<desc>&cuisineType=<cuisType>&hoursOfOperation=<hoursOp>')
 def addDetails(id, desc, cuistype, hoursOp):
 	#Add the description for the given food place into the database
 	cursor.execute("INSERT INTO restaurantDetails VALUES(?,?,?,?)", (id, desc, cuisType, hoursOp))
@@ -133,7 +133,7 @@ def addDetails(id, desc, cuistype, hoursOp):
 	
 	return json.dumps(ack)
 	
-@route('/updateDescription&placeID=<id:int>&description=<desc>')
+@post('/updateDescription&placeID=<id:int>&description=<desc>')
 def updateDescription(id, desc):
 	#Add the description for the given food place into the database
 	cursor.execute("UPDATE restaurantDetails SET description = ? WHERE restaurantID = ?", (desc, id))
@@ -148,7 +148,7 @@ def updateDescription(id, desc):
 	
 	return json.dumps(ack)
 
-@route('/updateCuisineType&placeID=<id:int>&cuisineType=<type>')
+@post('/updateCuisineType&placeID=<id:int>&cuisineType=<type>')
 def updateCuisineType(id, type):
 	#Add the description for the given food place into the database
 	cursor.execute("UPDATE restaurantDetails SET cuisineType = ? WHERE restaurantID = ?", (type, id))
@@ -163,7 +163,7 @@ def updateCuisineType(id, type):
 	
 	return json.dumps(ack)
 
-@route('/updateHours&placeID=<id:int>&hours=<hours>')
+@post('/updateHours&placeID=<id:int>&hours=<hours>')
 def updateDescription(id, hours):
 	#Add the description for the given food place into the database
 	cursor.execute("UPDATE restaurantDetails SET hoursOfOperation = ? WHERE restaurantID = ?", (hours, id))
@@ -181,10 +181,12 @@ def updateDescription(id, hours):
 # ############### USER CLIENT API's ############### #
 
 # Obtain all menu items and their prices of a food place given the restaurant ID
-@route('/getMenuItems&id=<id:int>')
-def location(id):
+@post('/getMenuItems')
+def location():
+	placeID = request.forms.get("placeID")
+	
 	#Query for a menu's items and their prices given an ID
-	cursor.execute("SELECT * FROM menu WHERE restaurantID=?", (id,))
+	cursor.execute("SELECT * FROM menu WHERE restaurantID=?", (placeID,))
 	
 	#JSON array to store all JSON objects
 	data = []
@@ -196,7 +198,7 @@ def location(id):
 	return json.dumps(data)
 
 # Get all basic details for each place on the map
-@route('/getAllPoints')
+@post('/getAllPoints')
 def allFoodPlaces():
 	#Query for all restaurants and their locations
 	cursor.execute("SELECT * FROM restaurant")
@@ -210,15 +212,17 @@ def allFoodPlaces():
 
 	return json.dumps(data)
 
-@route('/getPlaceDetails&id=<placeID:int>')
+@post('/getPlaceDetails')
 def getPlaceDetails():
 	# Find the largest review ID for the given food place
 	cursor.execute("SELECT max(reviewID) FROM review")
 	entry = cursor.fetchone()
 	maxReviewID = entry[0]
 	
+	placeID = request.forms.get("placeID)
+	
 	#Query to get a food place's details
-	cursor.execute("SELECT * FROM restaurantDetails WHERE restaurantID = ?", (id,))
+	cursor.execute("SELECT * FROM restaurantDetails WHERE restaurantID = ?", (placeID,))
 	
 	data = []
 	
@@ -226,7 +230,7 @@ def getPlaceDetails():
 		data.append({"description": row[1], "cuisineType": row[2], "hoursOfOperation": row[3]})
 		
 	#Query to get the food place's first five reviews
-	cursor.execute("SELECT * FROM review WHERE restaurantID = ? AND reviewID > 0 AND reviewID < 6", (id,))
+	cursor.execute("SELECT * FROM review WHERE restaurantID = ? AND reviewID > 0 AND reviewID < 6", (placeID,))
 	
 	for row in cursor:
 		if row[1] < maxReviewID:
@@ -237,15 +241,18 @@ def getPlaceDetails():
 	return json.dumps(data)
 	
 # Get the review and rating for a given food place
-@route('/getMoreReviews&id=<id:int>&index=<index:int>')
-def reviewRating(id, index):
+@post('/getMoreReviews')
+def reviewRating():
 	# Find the largest review ID for the given food place
 	cursor.execute("SELECT max(reviewID) FROM review")
 	entry = cursor.fetchone()
 	maxReviewID = entry[0]
 	
+	placeID = request.forms.get("placeID")
+	index = request.forms.get("index")
+	
 	#Query for a food place's reviews and ratings
-	cursor.execute("SELECT * FROM review WHERE restaurantID = ? AND reviewID > (? * 5) AND reviewID <= ((? + 1) * 5) ", (id,index,index,))
+	cursor.execute("SELECT * FROM review WHERE restaurantID = ? AND reviewID > (? * 5) AND reviewID <= ((? + 1) * 5) ", (placeID,index,index,))
 	
 	#JSON array to store all JSON objects
 	data = []
@@ -259,8 +266,8 @@ def reviewRating(id, index):
 	
 	return json.dumps(data)
 	
-@route('/submitReview&rating=<rating:int>&comments=<comment>&submitBy=<user>&placeID=<id:int>')
-def submitReview(rating, comment, user, id):
+@post('/submitReview')
+def submitReview():
 	newID = 0
 	
 	# Find the largest review ID for the given food place
@@ -272,8 +279,13 @@ def submitReview(rating, comment, user, id):
 	# Get the current timestamp
 	current_time = datetime.now().strftime("%Y/%m/%d %I:%M%p")
 	
+	placeID = request.forms.get("placeID")
+	rating = request.forms.get("rating")
+	comments = request.forms.get("comments")
+	submitBy = request.forms.get("submitBy")
+	
 	#Insert a review and rating for a given food place from a given user
-	cursor.execute("INSERT INTO review VALUES(?,?,?,?,?,?)", (id,newReviewID,comment,rating,current_time,user,))
+	cursor.execute("INSERT INTO review VALUES(?,?,?,?,?,?)", (placeID,newID,comments,rating,current_time,submitBy,))
 	
 	#Commit the changes to the database
 	conn.commit()
@@ -281,14 +293,17 @@ def submitReview(rating, comment, user, id):
 	# Set up a JSON object with a return value
 	# 0: success
 	# non-zero value: failure
-	ack = ["return": 0]
+	ack = ["status": 0]
 	
 	return json.dumps(ack)
 	
-@route('/addSubscription&deviceID=<deviceID>&user=<user>')
-def addSubscription(deviceID, user):
+@post('/addSubscription')
+def addSubscription():
+	user_email = request.forms.get("user_email")
+	deviceID = request.forms.get("deviceID")
+	
 	# Insert the new subscription into the database
-	cursor.execute("INSERT INTO subscription VALUES(?,?)", (user,deviceID,))
+	cursor.execute("INSERT INTO subscription VALUES(?,?)", (user_email,deviceID,))
 	
 	#Commit the changes to the database
 	conn.commit()
@@ -300,10 +315,13 @@ def addSubscription(deviceID, user):
 	
 	return json.dumps(ack)
 	
-@route('/removeSubscription&deviceID=<deviceID>&user=<user>')
-def removeSubscription(deviceID, user):
+@post('/removeSubscription')
+def removeSubscription():
+	user_email = request.forms.get("user_email")
+	deviceID = request.forms.get("deviceID")
+	
 	#Delete the entry containing the user and the device ID associated with that user
-	cursor.execute("DELETE FROM subscription WHERE user = ? AND deviceID = ?", (user,deviceID,))
+	cursor.execute("DELETE FROM subscription WHERE user = ? AND deviceID = ?", (user_email,deviceID,))
 	
 	#Commit the changes to the database
 	conn.commit()
