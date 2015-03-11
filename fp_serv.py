@@ -94,7 +94,8 @@ def register(user, pwd, name):
 	#Set up a JSON objet to store return values
 	# 0: success
 	# non-zero: failure
-	ack = ["return": 0]
+	ack = []
+	ack.append({"result": 0})
 	
 	return json.dumps(ack)
 
@@ -111,10 +112,10 @@ def login(user, pwd):
 	# non-zero value: failure
 	ack = []
 	
-	if check = None: #Login was unsuccessful
-		ack = ["return": 1]
+	if check == None: #Login was unsuccessful
+		ack.append({"result": 0})
 	else: #Login was successful
-		ack = ["return": 0]
+		ack.append({"result": 0})
 	
 	return json.dumps(ack)
 	
@@ -129,7 +130,8 @@ def addDetails(id, desc, cuistype, hoursOp):
 	#Set up a JSON objet to store return values
 	# 0: success
 	# non-zero: failure
-	ack = ["return": 0]
+	ack = []
+	ack.append({"result": 0})
 	
 	return json.dumps(ack)
 	
@@ -144,7 +146,8 @@ def updateDescription(id, desc):
 	#Set up a JSON objet to store return values
 	# 0: success
 	# non-zero: failure
-	ack = ["return": 0]
+	ack = []
+	ack.append({"result": 0})
 	
 	return json.dumps(ack)
 
@@ -159,7 +162,8 @@ def updateCuisineType(id, type):
 	#Set up a JSON objet to store return values
 	# 0: success
 	# non-zero: failure
-	ack = ["return": 0]
+	ack = []
+	ack.append({"result": 0})
 	
 	return json.dumps(ack)
 
@@ -174,7 +178,8 @@ def updateDescription(id, hours):
 	#Set up a JSON objet to store return values
 	# 0: success
 	# non-zero: failure
-	ack = ["return": 0]
+	ack = []
+	ack.append({"result": 0})
 	
 	return json.dumps(ack)
 	
@@ -219,7 +224,7 @@ def getPlaceDetails():
 	entry = cursor.fetchone()
 	maxReviewID = entry[0]
 	
-	placeID = request.forms.get("placeID)
+	placeID = request.forms.get("placeID")
 	
 	#Query to get a food place's details
 	cursor.execute("SELECT * FROM restaurantDetails WHERE restaurantID = ?", (placeID,))
@@ -227,7 +232,7 @@ def getPlaceDetails():
 	data = []
 	
 	for row in cursor:
-		data.append({"description": row[1], "cuisineType": row[2], "hoursOfOperation": row[3]})
+		data.append({"description": row[1], "cuisineType": row[2], "hoursOfOperation": row[3], "phoneNum": row[4]})
 		
 	#Query to get the food place's first five reviews
 	cursor.execute("SELECT * FROM review WHERE restaurantID = ? AND reviewID > 0 AND reviewID < 6", (placeID,))
@@ -293,7 +298,8 @@ def submitReview():
 	# Set up a JSON object with a return value
 	# 0: success
 	# non-zero value: failure
-	ack = ["status": 0]
+	ack = []
+	ack.append({"result": 0})
 	
 	return json.dumps(ack)
 	
@@ -311,7 +317,8 @@ def addSubscription():
 	# Set up a JSON object with a return value
 	# 0: success
 	# non-zero value: failure
-	ack = ["return": 0]
+	ack = []
+	ack.append({"result": 0})
 	
 	return json.dumps(ack)
 	
@@ -321,7 +328,7 @@ def removeSubscription():
 	deviceID = request.forms.get("deviceID")
 	
 	#Delete the entry containing the user and the device ID associated with that user
-	cursor.execute("DELETE FROM subscription WHERE user = ? AND deviceID = ?", (user_email,deviceID,))
+	cursor.execute("DELETE FROM subscription WHERE user_email = ? AND deviceID = ?", (user_email,deviceID,))
 	
 	#Commit the changes to the database
 	conn.commit()
@@ -329,7 +336,8 @@ def removeSubscription():
 	# Set up a JSON object with a return value
 	# 0: success
 	# non-zero value: failure
-	ack = ["return": 0]
+	ack = []
+	ack.append({"result": 0})
 	
 	return json.dumps(ack)
 
