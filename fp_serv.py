@@ -169,7 +169,7 @@ def addDetails():
 @post('/updateDescription')
 def updateDescription():
 	placeID = request.forms.get("placeID")
-	description = request.forms.get("description)
+	description = request.forms.get("description")
 
 	#Add the description for the given food place into the database
 	cursor.execute("UPDATE restaurantDetails SET description = ? WHERE restaurantID = ?", (description, placeID))
@@ -318,7 +318,7 @@ def getPlaceDetails():
 		data["cuisineType"] = row[2]
 		data["hoursOfOperation"] = row[3]
 		data["phoneNum"] = row[4]
-		data["images"] = row[5]
+		#data["images"] = row[5]
 		
 	return json.dumps(data)
 	
@@ -391,20 +391,15 @@ def addSubscription():
 	ack = {}
 	
 	try:
-		# Insert the new subscription into the database
 		cursor.execute("INSERT INTO subscription VALUES(?,?)", (user_email,placeID,))
-	except IntegrityError:
-		# Roll back any changes to the last commit
+		conn.commit()
+	except sqlite3.IntegrityError:
 		conn.rollback()
-		
 		ack["result"] = 1
 		return json.dumps(ack)
-	finally:
-		# Commit the changes to the database
-		conn.commit()
-		
-		ack["result"] = 0		
-		return json.dumps(ack)
+
+	ack["result"] = 0		
+	return json.dumps(ack)
 	
 @post('/removeSubscription')
 def removeSubscription():
