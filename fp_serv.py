@@ -314,7 +314,11 @@ def getPlaceDetails():
 	data = {}
 	
 	for row in cursor:
-		data.append({"description": row[1], "cuisineType": row[2], "hoursOfOperation": row[3], "phoneNum": row[4]})
+		data["description"] = row[1]
+		data["cuisineType"] = row[2]
+		data["hoursOfOperation"] = row[3]
+		data["phoneNum"] = row[4]
+		data["images"] = row[5]
 		
 	return json.dumps(data)
 	
