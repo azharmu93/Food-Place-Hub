@@ -385,19 +385,26 @@ def addSubscription():
 	placeID = request.forms.get("placeID")
 	user_email = request.forms.get("user_email")
 	
-	# Insert the new subscription into the database
-	cursor.execute("INSERT INTO subscription VALUES(?,?)", (user_email,placeID,))
-	
-	#Commit the changes to the database
-	conn.commit()
-	
 	# Set up a JSON object with a return value
 	# 0: success
 	# non-zero value: failure
 	ack = {}
-	ack["result"] = 0
 	
-	return json.dumps(ack)
+	try:
+		# Insert the new subscription into the database
+		cursor.execute("INSERT INTO subscription VALUES(?,?)", (user_email,placeID,))
+	except IntegrityError:
+		# Roll back any changes to the last commit
+		conn.rollback()
+		
+		ack["result"] = 1
+		return json.dumps(ack)
+	finally:
+		# Commit the changes to the database
+		conn.commit()
+		
+		ack["result"] = 0		
+		return json.dumps(ack)
 	
 @post('/removeSubscription')
 def removeSubscription():
