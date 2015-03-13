@@ -386,7 +386,7 @@ def addSubscription():
 	user_email = request.forms.get("user_email")
 	
 	# Insert the new subscription into the database
-	cursor.execute("INSERT INTO subscription VALUES(?,?)", (user_email,deviceID,))
+	cursor.execute("INSERT INTO subscription VALUES(?,?)", (user_email,placeID,))
 	
 	#Commit the changes to the database
 	conn.commit()
