@@ -249,6 +249,11 @@ def getPlaceDetails():
 	
 	for row in cursor:
 		data["information"] = {"description": row[1], "cuisineType": row[2], "hoursOfOperation": row[3], "phoneNum": row[4]}
+
+	if "information" in data:
+		data["info_status"] = "1"
+	else:
+		data["info_status"] = "0"
 	
 	reviews = []
 	#Query to get the food place's first five reviews
