@@ -70,9 +70,6 @@ def sendTestPush():
 
 # #######################################################
 
-# TODO:
-# Change the HTTP GET's to HTTP POST's
-
 # Connect to the database
 conn = sqlite3.connect('restaurant.sqlite')
 cursor = conn.cursor()
@@ -81,15 +78,23 @@ cursor = conn.cursor()
 @route('/test')
 def echotest():
 	test = ["Test successful"]
-	
 	json.dumps(test)
 
 # ############### ADMIN CLIENT API's ############### #
 
+# TODO:
+# Complete push message API
+
 # Register a new admin to the hub
-@post('/register&user=<user>&pwd=<pwd>&placeName=<name>')
-def register(user, pwd, name):
+@post('/register')
+def register():
 	newID = 0
+	user_email = request.forms.get("user_email")
+	password = request.forms.get("password")
+	placeName = request.forms.get("placeName")
+	buildingName = request.forms.get("buildingName")
+	longitude = request.forms.get("longitude")
+	latitude = request.forms.get("latitude")
 
 	# 1. Create the new food place entries in the database
 	cursor.execute("SELECT max(restaurantID) FROM restaurant")
@@ -97,12 +102,12 @@ def register(user, pwd, name):
 		maxID = cursor.fetchone()
 		newID = maxID[0] + 1
 		
-	
+	cursor.execute("INSERT INTO restaurant VALUES(?,?,?,?,?)", (newID,placeName,buildingName,longitude,latitude,))
 	
 	# 2. Create the login entry for the new admin user
 
 	#Insert the user's login credentials into the database in order to register the user
-	cursor.execute("INSERT INTO loginCredentials VALUES(?,?,?)", (user,pwd,name,))
+	cursor.execute("INSERT INTO loginCredentials VALUES(?,?)", (user_email,password,))
 	
 	#Commit the changes to the database
 	conn.commit()
@@ -116,10 +121,13 @@ def register(user, pwd, name):
 	return json.dumps(ack)
 
 # Log in an admin to the hub
-@post('/login&user=<user>&pwd=<pwd>')
-def login(user, pwd):
+@post('/login')
+def login():
+	user_email = request.forms.get("user_email")
+	password = request.forms.get("password")
+	
 	#Search for the user with the specified password
-	cursor.execute("SELECT * FROM loginCredentials WHERE user = ? AND password = ?", (user,pwd,))
+	cursor.execute("SELECT * FROM loginCredentials WHERE user = ? AND password = ?", (user_email,password,))
 	
 	check = login.fetchone()
 	
@@ -135,10 +143,17 @@ def login(user, pwd):
 	
 	return json.dumps(ack)
 	
-@post('/addDetails&placeID=<id:int>&description=<desc>&cuisineType=<cuisType>&hoursOfOperation=<hoursOp>')
-def addDetails(id, desc, cuistype, hoursOp):
+@post('/addDetails')
+def addDetails():
+	placeID = request.forms.get("placeID")
+	description = request.forms.get("description")
+	cuisineType = request.forms.get("cuisineType")
+	hoursOfOperation = request.forms.get("hoursOfOperation")
+	phoneNum = request.forms.get("phoneNum")
+	image = request.forms.get("image")
+	
 	#Add the description for the given food place into the database
-	cursor.execute("INSERT INTO restaurantDetails VALUES(?,?,?,?)", (id, desc, cuisType, hoursOp))
+	cursor.execute("INSERT INTO restaurantDetails VALUES(?,?,?,?,?,?)", (placeID, description, cuisineType, hoursOfOperation, phoneNum, image,))
 	
 	#Commit the changes to the database
 	conn.commit()
@@ -151,10 +166,13 @@ def addDetails(id, desc, cuistype, hoursOp):
 	
 	return json.dumps(ack)
 	
-@post('/updateDescription&placeID=<id:int>&description=<desc>')
-def updateDescription(id, desc):
+@post('/updateDescription')
+def updateDescription():
+	placeID = request.forms.get("placeID")
+	description = request.forms.get("description)
+
 	#Add the description for the given food place into the database
-	cursor.execute("UPDATE restaurantDetails SET description = ? WHERE restaurantID = ?", (desc, id))
+	cursor.execute("UPDATE restaurantDetails SET description = ? WHERE restaurantID = ?", (description, placeID))
 	
 	#Commit the changes to the database
 	conn.commit()
@@ -167,10 +185,13 @@ def updateDescription(id, desc):
 	
 	return json.dumps(ack)
 
-@post('/updateCuisineType&placeID=<id:int>&cuisineType=<type>')
-def updateCuisineType(id, type):
+@post('/updateCuisineType')
+def updateCuisineType():
+	placeID = request.forms.get("placeID")
+	cuisineType = request.forms.get("cuisineType")
+	
 	#Add the description for the given food place into the database
-	cursor.execute("UPDATE restaurantDetails SET cuisineType = ? WHERE restaurantID = ?", (type, id))
+	cursor.execute("UPDATE restaurantDetails SET cuisineType = ? WHERE restaurantID = ?", (cuisineType, plaecID))
 	
 	#Commit the changes to the database
 	conn.commit()
@@ -183,10 +204,13 @@ def updateCuisineType(id, type):
 	
 	return json.dumps(ack)
 
-@post('/updateHours&placeID=<id:int>&hours=<hours>')
-def updateDescription(id, hours):
+@post('/updateHoursOfOperation')
+def updateHoursOfOperation():
+	placeID = request.forms.get("placeID")
+	hoursOfOperation = request.forms.get("hoursOfOperation")
+	
 	#Add the description for the given food place into the database
-	cursor.execute("UPDATE restaurantDetails SET hoursOfOperation = ? WHERE restaurantID = ?", (hours, id))
+	cursor.execute("UPDATE restaurantDetails SET hoursOfOperation = ? WHERE restaurantID = ?", (hoursOfOperation, placeID))
 	
 	#Commit the changes to the database
 	conn.commit()
@@ -198,7 +222,49 @@ def updateDescription(id, hours):
 	ack.append({"result": 0})
 	
 	return json.dumps(ack)
+
+@post('/updatePhoneNum')
+def updatePhoneNum():
+	placeID = request.forms.get("placeID")
+	phoneNum = request.forms.get("phoneNum")
 	
+	#Add the description for the given food place into the database
+	cursor.execute("UPDATE restaurantDetails SET phoneNum = ? WHERE restaurantID = ?", (phoneNum, placeID))
+	
+	#Commit the changes to the database
+	conn.commit()
+	
+	#Set up a JSON objet to store return values
+	# 0: success
+	# non-zero: failure
+	ack = []
+	ack.append({"result": 0})
+	
+	return json.dumps(ack)
+
+@post('/updateImage')
+def updateImage():
+	placeID = request.forms.get("placeID")
+	image = request.forms.get("image")
+	
+	#Add the description for the given food place into the database
+	cursor.execute("UPDATE restaurantDetails SET image = ? WHERE restaurantID = ?", (image, placeID))
+	
+	#Commit the changes to the database
+	conn.commit()
+	
+	#Set up a JSON objet to store return values
+	# 0: success
+	# non-zero: failure
+	ack = []
+	ack.append({"result": 0})
+	
+	return json.dumps(ack)
+
+@post('/pushMessage')
+def pushMessage():
+	placeID = request.forms.get("placeID")
+	message = request.forms.get("message")
 # ############### USER CLIENT API's ############### #
 
 # Obtain all menu items and their prices of a food place given the restaurant ID
@@ -248,29 +314,12 @@ def getPlaceDetails():
 	data = {}
 	
 	for row in cursor:
-		data["information"] = {"description": row[1], "cuisineType": row[2], "hoursOfOperation": row[3], "phoneNum": row[4]}
-
-	if "information" in data:
-		data["info_status"] = "1"
-	else:
-		data["info_status"] = "0"
-	
-	reviews = []
-	#Query to get the food place's first five reviews
-	cursor.execute("SELECT * FROM review WHERE restaurantID = ? AND reviewID > 0 AND reviewID < 6", (placeID,))
-	
-	for row in cursor:
-		if row[1] < maxReviewID:
-			reviews.append({"review": row[2], "rating": row[3], "timestamp": row[4], "user": row[5], "end": 0})
-		else:
-			reviews.append({"review": row[2], "rating": row[3], "timestamp": row[4], "user": row[5], "end": 1})
-
-	data["reviews"] = reviews
+		data.append({"description": row[1], "cuisineType": row[2], "hoursOfOperation": row[3], "phoneNum": row[4]})
 		
 	return json.dumps(data)
 	
 # Get the review and rating for a given food place
-@post('/getMoreReviews')
+@post('/getReviews')
 def reviewRating():
 	# Find the largest review ID for the given food place
 	cursor.execute("SELECT max(reviewID) FROM review")
@@ -329,8 +378,8 @@ def submitReview():
 	
 @post('/addSubscription')
 def addSubscription():
+	placeID = request.forms.get("placeID")
 	user_email = request.forms.get("user_email")
-	deviceID = request.forms.get("deviceID")
 	
 	# Insert the new subscription into the database
 	cursor.execute("INSERT INTO subscription VALUES(?,?)", (user_email,deviceID,))
@@ -349,10 +398,10 @@ def addSubscription():
 @post('/removeSubscription')
 def removeSubscription():
 	user_email = request.forms.get("user_email")
-	deviceID = request.forms.get("deviceID")
+	placeID = request.forms.get("placeID")
 	
 	#Delete the entry containing the user and the device ID associated with that user
-	cursor.execute("DELETE FROM subscription WHERE user_email = ? AND deviceID = ?", (user_email,deviceID,))
+	cursor.execute("DELETE FROM subscription WHERE userEmail = ? AND restaurantID = ?", (user_email,placeID,))
 	
 	#Commit the changes to the database
 	conn.commit()
@@ -365,7 +414,7 @@ def removeSubscription():
 	
 	return json.dumps(ack)
 
-######################OAuth Functions#########################
+# #####################OAuth Functions######################## #
 @route('/signIn', 'GET')
 def signIn():
 	flow = flow_from_clientsecrets("client_secrets.json", scope="https://www.googleapis.com/auth/plus.me https://www.googleapis.com/auth/userinfo.email", redirect_uri="http://just.test.com:8080/redirect")
@@ -403,7 +452,7 @@ def authorized():
 	data["user_name"] = name
 	data["user_email"] = email
 	return json.dumps(data)
-##############################################################
+# ############################################################ #
 
 
 run(host = "192.168.0.109", port = 8080)
