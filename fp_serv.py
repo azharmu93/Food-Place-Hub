@@ -15,8 +15,9 @@ import httplib2
 # ####################GCM Functions######################
 from gcm import GCM
 gcm = GCM("AIzaSyDrBEVD-RkIKDNWGnt7S6C28tKDIgQk8Xg")
-
+counter = 0
 device_token = {}
+#device_token["zombies"] = "APA91bGo5vKYBGxhdh5xP_uFfaCYDNaVo3mKZfkYgacex2fR6U0OSBDQypn8lfne6N7oCGTsYAUIw97ooUjI7HcayDuu04Xl4axxCEaVxjYw58UM8AOxoI6SxQExTdo-YpXp7xJvAId4Q3xUXGKWGBjdIK4gnjySkg"
 
 @post('/registerAndroidDeviceForGCMPush')
 def registerAndroidDeviceForGCMPush():
@@ -26,10 +27,8 @@ def registerAndroidDeviceForGCMPush():
 	new_token = request.forms.get("new_push_device_token")
 	
 	if user_email not in device_token:
-		print "Adding an entry"
 		device_token[user_email] = new_token
 	elif user_email in device_token and device_token[user_email] != new_token:
-		print "Updating an entry"
 		device_token[user_email] = new_token
 
 	data = {}
@@ -40,14 +39,31 @@ def registerAndroidDeviceForGCMPush():
 @post('/sendTestPush')
 def sendTestPush():
 	global device_token
-	data = {'data': 'This is a test PUSH message'}
+	global counter
+	if (counter % 5) == 0:
+		data = {'messageTitle': 'Daily Special', "restaurant": 'SpringRoll SS', 'data': 'This is a test PUSH message'}
+	elif (counter % 5) == 1:
+		data = {'messageTitle': 'Daily Special', "restaurant": 'Veda', 'data': 'There is a new menu item'}
+	elif (counter % 5) == 2:
+		data = {'messageTitle': 'Daily Special', "restaurant": 'Cube', 'data': 'Drinks on sale after 4PM'}
+	elif (counter % 5) == 3:
+		data = {'messageTitle': 'Daily Special', "restaurant": 'SpringRoll MSB', 'data': 'Today\'s Daily Special $7.99 Chicken Fried Rice'}
+	elif (counter % 5) == 4:
+		data = {'messageTitle': 'Daily Special', "restaurant": 'Sammy\'s Student Exchange', 'data': 'Today is closed'}
 	
 	# Plaintext request
 	#reg_id = 'XXXXXXXXXXXXX'
 	#gcm.plaintext_request(registration_id=reg_id, data=data)
 	
+	print device_token.values()
+
 	# JSON request
 	response = gcm.json_request(registration_ids=device_token.values(), data=data)
+
+	counter = counter+1
+	data = {}
+	data["status"] = "0"
+	return json.dumps(data)
 
 	# Extra arguments
 	#res = gcm.json_request(registration_ids=reg_ids, data=data, collapse_key='uptoyou', delay_while_idle=True, time_to_live=3600)
@@ -213,7 +229,7 @@ def allFoodPlaces():
 	
 	#Store each row of data as a JSON object into the JSON array
 	for row in cursor:
-		data.append({"restaurant": row[1], "building": row[2], "Longitude": float(row[3]), "Latitude": float(row[4])})
+		data.append({"placeID": row[0], "restaurant": row[1], "building": row[2], "Longitude": row[3], "Latitude": row[4]})
 
 	return json.dumps(data)
 
@@ -229,19 +245,22 @@ def getPlaceDetails():
 	#Query to get a food place's details
 	cursor.execute("SELECT * FROM restaurantDetails WHERE restaurantID = ?", (placeID,))
 	
-	data = []
+	data = {}
 	
 	for row in cursor:
-		data.append({"description": row[1], "cuisineType": row[2], "hoursOfOperation": row[3], "phoneNum": row[4]})
-		
+		data["information"] = {"description": row[1], "cuisineType": row[2], "hoursOfOperation": row[3], "phoneNum": row[4]}
+	
+	reviews = []
 	#Query to get the food place's first five reviews
 	cursor.execute("SELECT * FROM review WHERE restaurantID = ? AND reviewID > 0 AND reviewID < 6", (placeID,))
 	
 	for row in cursor:
 		if row[1] < maxReviewID:
-			data.append({"review": row[2], "rating": row[3], "timestamp": row[4], "user": row[5], "end": 0})
+			reviews.append({"review": row[2], "rating": row[3], "timestamp": row[4], "user": row[5], "end": 0})
 		else:
-			data.append({"review": row[2], "rating": row[3], "timestamp": row[4], "user": row[5], "end": 1})
+			reviews.append({"review": row[2], "rating": row[3], "timestamp": row[4], "user": row[5], "end": 1})
+
+	data["reviews"] = reviews
 		
 	return json.dumps(data)
 	
@@ -341,6 +360,46 @@ def removeSubscription():
 	
 	return json.dumps(ack)
 
-run(host = "localhost", port = 8080)
+######################OAuth Functions#########################
+@route('/signIn', 'GET')
+def signIn():
+	flow = flow_from_clientsecrets("client_secrets.json", scope="https://www.googleapis.com/auth/plus.me https://www.googleapis.com/auth/userinfo.email", redirect_uri="http://just.test.com:8080/redirect")
+	uri = flow.step1_get_authorize_url()
+	redirect(str(uri))
 
+@route('/redirect')
+def redirect_page():
+	code = request.query.get('code', '')
+	flow = OAuth2WebServerFlow(client_id="868973567211-me9um9qovn4u9qqc4o624pscvgllqlac.apps.googleusercontent.com", client_secret="4J8V6p3pAzjFuo1JqQErIFd6", scope="https://www.googleapis.com/auth/plus.me https://www.googleapis.com/auth/userinfo.email", redirect_uri="http://just.test.com:8080/redirect")
+	credentials = flow.step2_exchange(code)
+	token = credentials.id_token['sub']
+
+	print "Token: " + token
+	http = httplib2.Http()
+	http = credentials.authorize(http)
+
+	users_service = build('oauth2', 'v2', http=http)
+	user_document = users_service.userinfo().get().execute()
+	user_email = user_document['email']
+	user_name = user_document['name']
+	
+	print "User Name: " + user_name
+	print "User Email: " + user_email
+
+	url = "http://192.168.0.109:8080/authorized?user_name=" + user_name + "&user_email=" + user_email
+	redirect(url)
+
+@route('/authorized')
+def authorized():
+	name = request.query.getunicode("user_name", None, "utf8")
+	email = request.query.getunicode("user_email", None, "utf8")
+	data = {}
+	data["status"] = "0"
+	data["user_name"] = name
+	data["user_email"] = email
+	return json.dumps(data)
+##############################################################
+
+
+run(host = "192.168.0.109", port = 8080)
 conn.close()
