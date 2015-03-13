@@ -115,8 +115,8 @@ def register():
 	#Set up a JSON objet to store return values
 	# 0: success
 	# non-zero: failure
-	ack = []
-	ack.append({"result": 0})
+	ack = {}
+	ack["result"] = 0
 	
 	return json.dumps(ack)
 
@@ -134,12 +134,12 @@ def login():
 	#Set up a JSON object to store return values
 	# 0: success
 	# non-zero value: failure
-	ack = []
+	ack = {}
 	
 	if check == None: #Login was unsuccessful
-		ack.append({"result": 0})
+		ack["result"] = 1
 	else: #Login was successful
-		ack.append({"result": 0})
+		ack["result"] = 0
 	
 	return json.dumps(ack)
 	
@@ -161,8 +161,8 @@ def addDetails():
 	#Set up a JSON objet to store return values
 	# 0: success
 	# non-zero: failure
-	ack = []
-	ack.append({"result": 0})
+	ack = {}
+	ack["result"] = 0
 	
 	return json.dumps(ack)
 	
@@ -180,8 +180,8 @@ def updateDescription():
 	#Set up a JSON objet to store return values
 	# 0: success
 	# non-zero: failure
-	ack = []
-	ack.append({"result": 0})
+	ack = {}
+	ack["result"] = 0
 	
 	return json.dumps(ack)
 
@@ -199,8 +199,8 @@ def updateCuisineType():
 	#Set up a JSON objet to store return values
 	# 0: success
 	# non-zero: failure
-	ack = []
-	ack.append({"result": 0})
+	ack = {}
+	ack["result"] = 0
 	
 	return json.dumps(ack)
 
@@ -218,8 +218,8 @@ def updateHoursOfOperation():
 	#Set up a JSON objet to store return values
 	# 0: success
 	# non-zero: failure
-	ack = []
-	ack.append({"result": 0})
+	ack = {}
+	ack["result"] = 0
 	
 	return json.dumps(ack)
 
@@ -237,8 +237,8 @@ def updatePhoneNum():
 	#Set up a JSON objet to store return values
 	# 0: success
 	# non-zero: failure
-	ack = []
-	ack.append({"result": 0})
+	ack = {}
+	ack["result"] = 0
 	
 	return json.dumps(ack)
 
@@ -256,8 +256,8 @@ def updateImage():
 	#Set up a JSON objet to store return values
 	# 0: success
 	# non-zero: failure
-	ack = []
-	ack.append({"result": 0})
+	ack = {}
+	ack["result"] = 0
 	
 	return json.dumps(ack)
 
@@ -375,8 +375,8 @@ def submitReview():
 	# Set up a JSON object with a return value
 	# 0: success
 	# non-zero value: failure
-	ack = []
-	ack.append({"result": 0})
+	ack = {}
+	ack["result"] = 0
 	
 	return json.dumps(ack)
 	
@@ -394,8 +394,8 @@ def addSubscription():
 	# Set up a JSON object with a return value
 	# 0: success
 	# non-zero value: failure
-	ack = []
-	ack.append({"result": 0})
+	ack = {}
+	ack["result"] = 0
 	
 	return json.dumps(ack)
 	
@@ -413,8 +413,8 @@ def removeSubscription():
 	# Set up a JSON object with a return value
 	# 0: success
 	# non-zero value: failure
-	ack = []
-	ack.append({"result": 0})
+	ack = {}
+	ack["result"] = 0
 	
 	return json.dumps(ack)
 
