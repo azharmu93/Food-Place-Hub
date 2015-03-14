@@ -325,13 +325,15 @@ def getPlaceDetails():
 # Get the review and rating for a given food place
 @post('/getReviews')
 def reviewRating():
-	# Find the largest review ID for the given food place
-	cursor.execute("SELECT max(reviewID) FROM review")
-	entry = cursor.fetchone()
-	maxReviewID = entry[0]
 	
 	placeID = request.forms.get("placeID")
 	index = request.forms.get("index")
+
+	# Find the largest review ID for the given food place
+	cursor.execute("SELECT max(reviewID) FROM review WHERE restaurantID = ?", (placeID,))
+	if cursor != None:
+		entry = cursor.fetchone()
+		maxReviewID = entry[0]
 	
 	#Query for a food place's reviews and ratings
 	cursor.execute("SELECT * FROM review WHERE restaurantID = ? AND reviewID > (? * 5) AND reviewID <= ((? + 1) * 5) ", (placeID,index,index,))
@@ -360,7 +362,10 @@ def submitReview():
 	cursor.execute("SELECT max(reviewID) FROM review WHERE restaurantID = ?", (placeID,))
 	if cursor != None:
 		maxID = cursor.fetchone()
-		newID = maxID[0] + 1
+		if maxID[0] != None:
+			newID = maxID[0] + 1
+		else:
+			newID = 1
 	
 	# Get the current timestamp
 	current_time = datetime.now().strftime("%Y/%m/%d %I:%M%p")
