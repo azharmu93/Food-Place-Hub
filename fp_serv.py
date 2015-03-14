@@ -351,20 +351,19 @@ def reviewRating():
 @post('/submitReview')
 def submitReview():
 	newID = 0
+	placeID = request.forms.get("placeID")
+	rating = request.forms.get("rating")
+	comments = request.forms.get("comments")
+	submitBy = request.forms.get("submitBy")
 	
 	# Find the largest review ID for the given food place
-	cursor.execute("SELECT max(reviewID) FROM review")
+	cursor.execute("SELECT max(reviewID) FROM review WHERE restaurantID = ?", (placeID,))
 	if cursor != None:
 		maxID = cursor.fetchone()
 		newID = maxID[0] + 1
 	
 	# Get the current timestamp
 	current_time = datetime.now().strftime("%Y/%m/%d %I:%M%p")
-	
-	placeID = request.forms.get("placeID")
-	rating = request.forms.get("rating")
-	comments = request.forms.get("comments")
-	submitBy = request.forms.get("submitBy")
 	
 	#Insert a review and rating for a given food place from a given user
 	cursor.execute("INSERT INTO review VALUES(?,?,?,?,?,?)", (placeID,newID,comments,rating,current_time,submitBy,))
