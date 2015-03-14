@@ -280,7 +280,7 @@ def location():
 	
 	#Store each row of data as a JSON object into the JSON array
 	for row in cursor:
-		data.append({"itemName": row[2], "price": row[3]})
+		data.append({"itemID": row[1], "itemName": row[2], "price": row[3]})
 	
 	return json.dumps(data)
 
