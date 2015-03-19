@@ -129,7 +129,7 @@ def login():
 	#Search for the user with the specified password
 	cursor.execute("SELECT * FROM loginCredentials WHERE user = ? AND password = ?", (user_email,password,))
 	
-	check = login.fetchone()
+	check = cursor.fetchone()
 	
 	#Set up a JSON object to store return values
 	# 0: success
