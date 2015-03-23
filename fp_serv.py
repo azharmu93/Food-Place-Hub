@@ -96,35 +96,48 @@ def register():
 	longitude = request.forms.get("longitude")
 	latitude = request.forms.get("latitude")
 	
-	print "Parameters:"
-	print "user: %s" % request.forms.get("user")
-	print "password: %s" % request.forms.get("password")
-	print "placeName: %s" % request.forms.get("placeName")
-	print "buildingName: %s" % request.forms.get("buildingName")
-	print "longitude: %s" % request.forms.get("longitude")
-	print "latitude: %s" % request.forms.get("latitude")
-	
 	#Set up a JSON objet to store return values
 	# 0: success
 	# non-zero: failure
 	ack = {}
-	ack["result"] = 0
 
-	# 1. Create the new food place entries in the database
+	# 1. Create the login entry for the new admin user
+	# Check if the username or password already exists
+	cursor.execute("SELECT * FROM loginCredentials WHERE user = ? OR password = ?", (user,password,))
+	
+	isUser = cursor.fetchall()
+	
+	if isUser != None: # User already exists; do not create new account and new food place
+		ack["result"] = 1
+		return json.dumps(ack)
+		
+	# Insert the user's login credentials into the database in order to register the user
+	cursor.execute("INSERT INTO loginCredentials VALUES(?,?)", (user,password,))
+	
+	# 2. Create the new food place entries in the database
+	
+	# Check if a food place already exists
+	cursor.execute("SELECT * FROM restaurant WHERE restaurantName = ?", (placeName,))
+	
+	isPlace = cursor.fetchall()
+	
+	if isPlace != None: # Food place w/ same name already exists; do not create new food place
+		ack["result"] = 1
+		return json.dumps(ack)
+		
 	cursor.execute("SELECT max(restaurantID) FROM restaurant")
 	maxID = cursor.fetchone()
 	if maxID != None:
 		newID = maxID[0] + 1
-		
+	
 	cursor.execute("INSERT INTO restaurant VALUES(?,?,?,?,?)", (newID,placeName,buildingName,longitude,latitude,))
 	
-	# 2. Create the login entry for the new admin user
-
-	#Insert the user's login credentials into the database in order to register the user
-	cursor.execute("INSERT INTO loginCredentials VALUES(?,?)", (user,password,))
-	
-	#Commit the changes to the database
+	# Commit the changes to the database
 	conn.commit()
+	
+	# If this point is reached, everything is done successfully
+	ack["result"] = 0
+	ack["placeID"] = newID
 	
 	return json.dumps(ack)
 
@@ -136,17 +149,16 @@ def login():
 	
 	#Search for the user with the specified password
 	cursor.execute("SELECT * FROM loginCredentials WHERE user = ? AND password = ?", (user_email,password,))
-	
 	check = cursor.fetchone()
 	
-	#Set up a JSON object to store return values
-	# 0: success
-	# non-zero value: failure
+	# Set up a JSON object to store return values
+	#  0: success
+	#  non-zero value: failure
 	ack = {}
 	
-	if check == None: #Login was unsuccessful
+	if check == None: # Login was unsuccessful
 		ack["result"] = 1
-	else: #Login was successful
+	else: # Login was successful
 		ack["result"] = 0
 	
 	return json.dumps(ack)
@@ -160,15 +172,15 @@ def addDetails():
 	phoneNum = request.forms.get("phoneNum")
 	image = request.forms.get("image")
 	
-	#Add the description for the given food place into the database
+	# Add the description for the given food place into the database
 	cursor.execute("INSERT INTO restaurantDetails VALUES(?,?,?,?,?,?)", (placeID, description, cuisineType, hoursOfOperation, phoneNum, image,))
 	
-	#Commit the changes to the database
+	# Commit the changes to the database
 	conn.commit()
 	
-	#Set up a JSON objet to store return values
-	# 0: success
-	# non-zero: failure
+	# Set up a JSON objet to store return values
+	#  0: success
+	#  non-zero: failure
 	ack = {}
 	ack["result"] = 0
 	
@@ -255,15 +267,100 @@ def updateImage():
 	placeID = request.forms.get("placeID")
 	image = request.forms.get("image")
 	
-	#Add the description for the given food place into the database
+	# Add the description for the given food place into the database
 	cursor.execute("UPDATE restaurantDetails SET image = ? WHERE restaurantID = ?", (image, placeID))
 	
-	#Commit the changes to the database
+	# Commit the changes to the database
 	conn.commit()
 	
-	#Set up a JSON objet to store return values
-	# 0: success
-	# non-zero: failure
+	# Set up a JSON objet to store return values
+	#  0: success
+	#  non-zero: failure
+	ack = {}
+	ack["result"] = 0
+	
+	return json.dumps(ack)
+	
+@post('/addMenuItem')
+def addMenuItem():
+	placeID = request.forms.get("placeID")
+	itemName = request.forms.get("itemName")
+	itemPrice = request.forms.get("itemPrice")
+	categoryID = 0
+	
+	# Set up a JSON objet to store return values
+	#  0: success
+	#  non-zero: failure
+	ack = {}
+	
+	# Check if the menu item already exists
+	cursor.execute("SELECT * FROM menu WHERE restaurantID = ? AND itemName = ?", (placeID, itemName,))
+	
+	isItem = cursor.fetchall()
+	
+	if isItem != None:
+		ack["result"] = 1
+		return json.dumps(ack)
+		
+	# Add the new menu item into the database
+	newID = 0
+	
+	cursor.execute("SELECT max(itemID) FROM menu WHERE restaurantID = ?", (placeID,))
+	maxID = cursor.fetchone()
+	
+	if maxID != None:
+		newID = maxID[0] + 1
+		
+	cursor.execute("INSERT INTO menu VALUES(?,?,?,?,?)", (placeID, newID, itemName, itemPrice, categoryID,))
+	
+	# Commit the changes to the database
+	conn.commit()
+	
+	# If this point is reached, everything was done successfully
+	ack["result"] = 0
+	ack["itemID"] = newID
+	
+	return json.dumps(ack)
+	
+@post('/updateMenuItemName')
+def updateMenuItemName():
+	placeID = request.forms.get("placeID")
+	itemID = request.forms.get("itemID")
+	itemName = request.forms.get("itemName")
+	
+	cursor.execute("UPDATE menu SET itemName = ? WHERE restaurantID = ? AND itemID = ?", (itemName, placeID, itemID,))
+	
+	conn.commit()
+	
+	ack = {}
+	ack["result"] = 0
+	
+	return json.dumps(ack)
+	
+@post('/updateMenuItemPrice')
+def updateMenuItemName():
+	placeID = request.forms.get("placeID")
+	itemID = request.forms.get("itemID")
+	itemName = request.forms.get("itemPrice")
+	
+	cursor.execute("UPDATE menu SET price = ? WHERE restaurantID = ? AND itemID = ?", (itemPrice, placeID, itemID,))
+	
+	conn.commit()
+	
+	ack = {}
+	ack["result"] = 0
+	
+	return json.dumps(ack)
+	
+@post('/deleteMenuItem')
+def deleteMenuItem():
+	placeID = request.forms.get("placeID")
+	itemID = request.forms.get("itemID")
+	
+	cursor.execute("DELETE FROM menu WHERE restaurantID = ? AND itemID = ?", (placeID, itemID,))
+	
+	conn.commit()
+	
 	ack = {}
 	ack["result"] = 0
 	
@@ -271,9 +368,34 @@ def updateImage():
 
 @post('/pushMessage')
 def pushMessage():
+	global device_token
 	placeID = request.forms.get("placeID")
 	message = request.forms.get("message")
-
+	
+	# Set up a JSON object with a return value
+	# 0: success
+	# non-zero value: failure
+	ack = {}
+	
+	# Retrieve all of the users for a certain food place
+	cursor.execute("SELECT userEmail FROM subscription WHERE restaurantID = ?", (placeID,))
+	
+	users = cursor.fetchall()
+	
+	if users == None:
+		ack["result"] = 1
+		return json.dumps(ack)
+	
+	subs_tokens = {}
+	
+	for sub in users:
+		subs_tokens[sub[0]] = device_token[sub[0]]
+	
+	response = gcm.json_request(registration_ids=subs_tokens.values(), data=message)
+	
+	ack["result"] = 0
+	
+	return json.dumps(ack)
 	
 # ############### USER CLIENT API's ############### #
 
