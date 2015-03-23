@@ -115,9 +115,6 @@ def register():
 	maxID = cursor.fetchone()
 	if maxID != None:
 		newID = maxID[0] + 1
-	else:
-		ack["result"] = 1
-		return json.dumps(ack)
 		
 	cursor.execute("INSERT INTO restaurant VALUES(?,?,?,?,?)", (newID,placeName,buildingName,longitude,latitude,))
 	
