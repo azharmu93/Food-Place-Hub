@@ -89,7 +89,7 @@ def echotest():
 @post('/register')
 def register():
 	newID = 0
-	user_email = request.forms.get("user_email")
+	user_email = request.forms.get("user")
 	password = request.forms.get("password")
 	placeName = request.forms.get("placeName")
 	buildingName = request.forms.get("buildingName")
