@@ -89,34 +89,45 @@ def echotest():
 @post('/register')
 def register():
 	newID = 0
-	user_email = request.forms.get("user")
+	user = request.forms.get("user")
 	password = request.forms.get("password")
 	placeName = request.forms.get("placeName")
 	buildingName = request.forms.get("buildingName")
 	longitude = request.forms.get("longitude")
 	latitude = request.forms.get("latitude")
-
-	# 1. Create the new food place entries in the database
-	cursor.execute("SELECT max(restaurantID) FROM restaurant")
-	if cursor != None:
-		maxID = cursor.fetchone()
-		newID = maxID[0] + 1
-		
-	cursor.execute("INSERT INTO restaurant VALUES(?,?,?,?,?)", (newID,placeName,buildingName,longitude,latitude,))
 	
-	# 2. Create the login entry for the new admin user
-
-	#Insert the user's login credentials into the database in order to register the user
-	cursor.execute("INSERT INTO loginCredentials VALUES(?,?)", (user_email,password,))
-	
-	#Commit the changes to the database
-	conn.commit()
+	print "Parameters:"
+	print "user: %" % user
+	print "password: %" % password
+	print "placeName: %" % placeName
+	print "buildingName: %" % buildingName
+	print "longitude: %" % longitude
+	print "latitude: %" % latitude
 	
 	#Set up a JSON objet to store return values
 	# 0: success
 	# non-zero: failure
 	ack = {}
 	ack["result"] = 0
+
+	# 1. Create the new food place entries in the database
+	cursor.execute("SELECT max(restaurantID) FROM restaurant")
+	maxID = cursor.fetchone()
+	if maxID != None:
+		newID = maxID[0] + 1
+	else:
+		ack["result"] = 1
+		return json.dumps(ack)
+		
+	cursor.execute("INSERT INTO restaurant VALUES(?,?,?,?,?)", (newID,placeName,buildingName,longitude,latitude,))
+	
+	# 2. Create the login entry for the new admin user
+
+	#Insert the user's login credentials into the database in order to register the user
+	cursor.execute("INSERT INTO loginCredentials VALUES(?,?)", (user,password,))
+	
+	#Commit the changes to the database
+	conn.commit()
 	
 	return json.dumps(ack)
 
@@ -265,6 +276,8 @@ def updateImage():
 def pushMessage():
 	placeID = request.forms.get("placeID")
 	message = request.forms.get("message")
+
+	
 # ############### USER CLIENT API's ############### #
 
 # Obtain all menu items and their prices of a food place given the restaurant ID
@@ -331,8 +344,8 @@ def reviewRating():
 
 	# Find the largest review ID for the given food place
 	cursor.execute("SELECT max(reviewID) FROM review WHERE restaurantID = ?", (placeID,))
-	if cursor != None:
-		entry = cursor.fetchone()
+	entry = cursor.fetchone()
+	if entry != None:
 		maxReviewID = entry[0]
 	
 	#Query for a food place's reviews and ratings
