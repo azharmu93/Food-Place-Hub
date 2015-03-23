@@ -97,12 +97,12 @@ def register():
 	latitude = request.forms.get("latitude")
 	
 	print "Parameters:"
-	print "user: %s" % user
-	print "password: %s" % password
-	print "placeName: %s" % placeName
-	print "buildingName: %s" % buildingName
-	print "longitude: %s" % longitude
-	print "latitude: %s" % latitude
+	print "user: %s" % request.forms.get("user")
+	print "password: %s" % request.forms.get("password")
+	print "placeName: %s" % request.forms.get("placeName")
+	print "buildingName: %s" % request.forms.get("buildingName")
+	print "longitude: %s" % request.forms.get("longitude")
+	print "latitude: %s" % request.forms.get("latitude")
 	
 	#Set up a JSON objet to store return values
 	# 0: success
