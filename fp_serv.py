@@ -111,31 +111,43 @@ def register():
 
 	# 1. Create the login entry for the new admin user
 	# Check if the username or password already exists
-	cursor.execute("SELECT * FROM loginCredentials WHERE user = ?", (user,))
-	isUser = cursor.fetchall()
+	#cursor.execute("SELECT * FROM loginCredentials WHERE user = ?", (user,))
+	#isUser = cursor.fetchone()
 	
-	cursor.execute("SELECT * FROM loginCredentials WHERE password = ?", (password,))
-	isPwd = cursor.fetchall()
+	#cursor.execute("SELECT * FROM loginCredentials WHERE password = ?", (password,))
+	#isPwd = cursor.fetchone()
 	
-	if isUser != None:
-		ack["result"] = 1
-		return json.dumps(ack)
-	elif isPwd != None:
-		ack["result"] = 1
-		return json.dumps(ack)
+	#if isUser != None:
+	#	ack["result"] = 1
+	#	ack["error"] = "Same user/password"
+	#	return json.dumps(ack)
+	#elif isPwd != None:
+	#	ack["result"] = 1
+	#	ack["error"] = "Same user/password"
+	#	return json.dumps(ack)
 		
 	# Insert the user's login credentials into the database in order to register the user
-	cursor.execute("INSERT INTO loginCredentials VALUES(?,?)", (user,password,))
+	#cursor.execute("INSERT INTO loginCredentials VALUES(?,?)", (user,password,))
+	
+	try:
+		cursor.execute("INSERT INTO loginCredentials VALUES(?,?)", (user,password,))
+		conn.commit()
+	except sqlite3.IntegrityError:
+		conn.rollback()
+		ack["result"] = 1
+		ack["error"] = "Same user/password"
+		return json.dumps(ack)
 	
 	# 2. Create the new food place entries in the database
 	
 	# Check if a food place already exists
 	cursor.execute("SELECT * FROM restaurant WHERE restaurantName = ?", (placeName,))
 	
-	isPlace = cursor.fetchall()
+	isPlace = cursor.fetchone()
 	
 	if isPlace != None: # Food place w/ same name already exists; do not create new food place
 		ack["result"] = 1
+		ack["error"] = "Same food place name"
 		return json.dumps(ack)
 		
 	cursor.execute("SELECT max(restaurantID) FROM restaurant")
@@ -311,10 +323,11 @@ def addMenuItem():
 	# Check if the menu item already exists
 	cursor.execute("SELECT * FROM menu WHERE restaurantID = ? AND itemName = ?", (placeID, itemName,))
 	
-	isItem = cursor.fetchall()
+	isItem = cursor.fetchone()
 	
 	if isItem != None:
 		ack["result"] = 1
+		ack["error"] = "Same menu item"
 		return json.dumps(ack)
 		
 	# Add the new menu item into the database
@@ -399,8 +412,9 @@ def pushMessage():
 	
 	users = cursor.fetchall()
 	
-	if users == None:
+	if users == []:
 		ack["result"] = 1
+		ack["error"] = "No subscribers"
 		return json.dumps(ack)
 	
 	subs_tokens = {}
@@ -509,12 +523,11 @@ def submitReview():
 	
 	# Find the largest review ID for the given food place
 	cursor.execute("SELECT max(reviewID) FROM review WHERE restaurantID = ?", (placeID,))
-	if cursor != None:
-		maxID = cursor.fetchone()
-		if maxID[0] != None:
-			newID = maxID[0] + 1
-		else:
-			newID = 1
+	maxID = cursor.fetchone()
+	if maxID[0] != None:
+		newID = maxID[0] + 1
+	else:
+		newID = 1
 	
 	# Get the current timestamp
 	current_time = datetime.now().strftime("%Y/%m/%d %I:%M%p")
@@ -549,6 +562,7 @@ def addSubscription():
 	except sqlite3.IntegrityError:
 		conn.rollback()
 		ack["result"] = 1
+		ack["error"] = "Subscriber already exists"
 		return json.dumps(ack)
 
 	ack["result"] = 0		
