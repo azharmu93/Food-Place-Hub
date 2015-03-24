@@ -117,7 +117,10 @@ def register():
 	cursor.execute("SELECT * FROM loginCredentials WHERE password = ?", (password,))
 	isPwd = cursor.fetchall()
 	
-	if isUser != None || isPwd != None: # User or password already used; do not create new account and new food place
+	if isUser != None:
+		ack["result"] = 1
+		return json.dumps(ack)
+	elif isPwd != None:
 		ack["result"] = 1
 		return json.dumps(ack)
 		
