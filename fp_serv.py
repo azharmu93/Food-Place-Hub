@@ -111,11 +111,13 @@ def register():
 
 	# 1. Create the login entry for the new admin user
 	# Check if the username or password already exists
-	cursor.execute("SELECT * FROM loginCredentials WHERE user = ? OR password = ?", (user,password,))
-	
+	cursor.execute("SELECT * FROM loginCredentials WHERE user = ?", (user,))
 	isUser = cursor.fetchall()
 	
-	if isUser != None: # User already exists; do not create new account and new food place
+	cursor.execute("SELECT * FROM loginCredentials WHERE password = ?", (password,))
+	isPwd = cursor.fetchall()
+	
+	if isUser != None || isPwd != None: # User or password already used; do not create new account and new food place
 		ack["result"] = 1
 		return json.dumps(ack)
 		
