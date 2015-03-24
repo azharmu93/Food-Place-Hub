@@ -129,6 +129,8 @@ def register():
 	maxID = cursor.fetchone()
 	if maxID != None:
 		newID = maxID[0] + 1
+	else:
+		newID = 1
 	
 	cursor.execute("INSERT INTO restaurant VALUES(?,?,?,?,?)", (newID,placeName,buildingName,longitude,latitude,))
 	
@@ -310,6 +312,8 @@ def addMenuItem():
 	
 	if maxID != None:
 		newID = maxID[0] + 1
+	else:
+		newID = 1
 		
 	cursor.execute("INSERT INTO menu VALUES(?,?,?,?,?)", (placeID, newID, itemName, itemPrice, categoryID,))
 	
