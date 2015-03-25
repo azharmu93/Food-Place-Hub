@@ -171,11 +171,11 @@ def register():
 # Log in an admin to the hub
 @post('/login')
 def login():
-	user_email = request.forms.get("user_email")
+	user = request.forms.get("user")
 	password = request.forms.get("password")
 	
 	#Search for the user with the specified password
-	cursor.execute("SELECT * FROM loginCredentials WHERE user = ? AND password = ?", (user_email,password,))
+	cursor.execute("SELECT * FROM loginCredentials WHERE user = ? AND password = ?", (user,password,))
 	check = cursor.fetchone()
 	
 	# Set up a JSON object to store return values
@@ -185,6 +185,7 @@ def login():
 	
 	if check == None: # Login was unsuccessful
 		ack["result"] = 1
+		ack["error"] = "User does not exist"
 	else: # Login was successful
 		ack["result"] = 0
 	
