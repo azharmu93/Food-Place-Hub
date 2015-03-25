@@ -96,13 +96,13 @@ def register():
 	longitude = request.forms.get("longitude")
 	latitude = request.forms.get("latitude")
 	
-	print "Parameters:"
-	print "User: %s" % user
-	print "Password: %s" % password
-	print "placeName: %s" % placeName
-	print "buildingName: %s" % buildingName
-	print "longitude: %s" % longitude
-	print "latitude: %s" % latitude
+	#print "Parameters:"
+	#print "User: %s" % user
+	#print "Password: %s" % password
+	#print "placeName: %s" % placeName
+	#print "buildingName: %s" % buildingName
+	#print "longitude: %s" % longitude
+	#print "latitude: %s" % latitude
 	
 	#Set up a JSON objet to store return values
 	# 0: success
@@ -157,7 +157,7 @@ def register():
 	else:
 		newID = 1
 	
-	cursor.execute("INSERT INTO restaurant VALUES(?,?,?,?,?)", (newID,placeName,buildingName,longitude,latitude,))
+	cursor.execute("INSERT INTO restaurant VALUES(?,?,?,?,?,?)", (newID,placeName,buildingName,longitude,latitude,user,))
 	
 	# Commit the changes to the database
 	conn.commit()
@@ -187,7 +187,12 @@ def login():
 		ack["result"] = 1
 		ack["error"] = "User does not exist"
 	else: # Login was successful
+		# Fetch the placeID associated with the account
+		cursor.execute("SELECT restaurantID FROM restaurant WHERE user = ?", (user,))
+		placeID = cursor.fetchone()
+		
 		ack["result"] = 0
+		ack["placeID"] = placeID[0]
 	
 	return json.dumps(ack)
 	
