@@ -374,10 +374,10 @@ def updateMenuItemName():
 	return json.dumps(ack)
 	
 @post('/updateMenuItemPrice')
-def updateMenuItemName():
+def updateMenuItemPrice():
 	placeID = request.forms.get("placeID")
 	itemID = request.forms.get("itemID")
-	itemName = request.forms.get("itemPrice")
+	itemPrice = request.forms.get("itemPrice")
 	
 	cursor.execute("UPDATE menu SET price = ? WHERE restaurantID = ? AND itemID = ?", (itemPrice, placeID, itemID,))
 	
