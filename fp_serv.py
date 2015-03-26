@@ -244,7 +244,7 @@ def updateCuisineType():
 	cuisineType = request.forms.get("cuisineType")
 	
 	#Add the description for the given food place into the database
-	cursor.execute("UPDATE restaurantDetails SET cuisineType = ? WHERE restaurantID = ?", (cuisineType, plaecID))
+	cursor.execute("UPDATE restaurantDetails SET cuisineType = ? WHERE restaurantID = ?", (cuisineType, placeID))
 	
 	#Commit the changes to the database
 	conn.commit()
