@@ -78,7 +78,7 @@ cursor = conn.cursor()
 @route('/test')
 def echotest():
 	test = ["Test successful"]
-	json.dumps(test)
+	return json.dumps(test)
 
 # ############### ADMIN CLIENT API's ############### #
 
@@ -634,5 +634,5 @@ def authorized():
 # ############################################################ #
 
 
-run(host = "192.168.0.109", port = 8080)
+run(host = "0.0.0.0", port = 8080)
 conn.close()
