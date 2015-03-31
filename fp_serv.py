@@ -416,12 +416,15 @@ def pushMessage():
 		ack["error"] = "No subscribers"
 		return json.dumps(ack)
 	
-	subs_tokens = {}
+	subs_tokens = []
 	
 	for sub in users:
-		subs_tokens[sub[0]] = device_token[sub[0]]
+		subs_tokens.append(device_token[sub[0]])
 	
-	response = gcm.json_request(registration_ids=subs_tokens.values(), data=message)
+	cursor.execute("SELECT restaurantName FROM restaurant WHERE restaurantID = ?", (placeID,))
+	restaurantName = cursor.fetchall()
+	data = {"restaurant": restaurantName, 'data': message}
+	response = gcm.json_request(registration_ids=subs_tokens, data=data)
 	
 	ack["result"] = 0
 	
