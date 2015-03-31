@@ -17,7 +17,6 @@ from gcm import GCM
 gcm = GCM("AIzaSyDrBEVD-RkIKDNWGnt7S6C28tKDIgQk8Xg")
 counter = 0
 device_token = {}
-#device_token["zombies"] = "APA91bGo5vKYBGxhdh5xP_uFfaCYDNaVo3mKZfkYgacex2fR6U0OSBDQypn8lfne6N7oCGTsYAUIw97ooUjI7HcayDuu04Xl4axxCEaVxjYw58UM8AOxoI6SxQExTdo-YpXp7xJvAId4Q3xUXGKWGBjdIK4gnjySkg"
 
 @post('/registerAndroidDeviceForGCMPush')
 def registerAndroidDeviceForGCMPush():
@@ -51,10 +50,6 @@ def sendTestPush():
 	elif (counter % 5) == 4:
 		data = {'messageTitle': 'Daily Special', "restaurant": 'Sammy\'s Student Exchange', 'data': 'Today is closed'}
 	
-	# Plaintext request
-	#reg_id = 'XXXXXXXXXXXXX'
-	#gcm.plaintext_request(registration_id=reg_id, data=data)
-	
 	print device_token.values()
 
 	# JSON request
@@ -65,8 +60,6 @@ def sendTestPush():
 	data["status"] = "0"
 	return json.dumps(data)
 
-	# Extra arguments
-	#res = gcm.json_request(registration_ids=reg_ids, data=data, collapse_key='uptoyou', delay_while_idle=True, time_to_live=3600)
 
 # #######################################################
 
@@ -573,6 +566,40 @@ def addSubscription():
 
 	ack["result"] = 0		
 	return json.dumps(ack)
+
+@post('/getAllSubscriptions')
+def getAllSubscriptions():
+	
+	user_email = request.forms.get("user_email")
+
+	# get all the place the user_email has subscribed to
+	cursor.execute("SELECT  restaurant.restaurantID, restaurant.restaurantName, restaurant.buildingName FROM restaurant INNER JOIN subscription ON restaurant.restaurantID = subscription.restaurantID WHERE userEmail= ? ", (user_email,))
+
+	#JSON array to store all JSON objects
+	data = []
+	
+	#Store each row of data as a JSON object into the JSON array
+	for row in cursor:
+		data.append({"restaurantID": row[0], "restaurantName": row[1], "buildingName": row[2]})
+	
+	return json.dumps(data)
+
+@post('/searchForRestaurant')
+def searchForRestaurant():
+	word = request.forms.get("word")
+	search_word = "%" + word + "%"
+
+	#get all the place containing the string literal
+	cursor.execute("SELECT * FROM restaurant WHERE restaurantName LIKE ? ", (search_word,))
+
+	#JSON array to store all JSON objects
+	data = []
+	
+	#Store each row of data as a JSON object into the JSON array
+	for row in cursor:
+		data.append({"placeID": row[0], "restaurant": row[1], "building": row[2], "Longitude": row[3], "Latitude": row[4]})
+	
+	return json.dumps(data)
 	
 @post('/removeSubscription')
 def removeSubscription():
@@ -596,14 +623,14 @@ def removeSubscription():
 # #####################OAuth Functions######################## #
 @route('/signIn', 'GET')
 def signIn():
-	flow = flow_from_clientsecrets("client_secrets.json", scope="https://www.googleapis.com/auth/plus.me https://www.googleapis.com/auth/userinfo.email", redirect_uri="http://just.test.com:8080/redirect")
+	flow = flow_from_clientsecrets("client_secrets.json", scope="https://www.googleapis.com/auth/plus.me https://www.googleapis.com/auth/userinfo.email", redirect_uri="http://ec2-52-4-76-203.compute-1.amazonaws.com:8080/redirect")
 	uri = flow.step1_get_authorize_url()
 	redirect(str(uri))
 
 @route('/redirect')
 def redirect_page():
 	code = request.query.get('code', '')
-	flow = OAuth2WebServerFlow(client_id="868973567211-me9um9qovn4u9qqc4o624pscvgllqlac.apps.googleusercontent.com", client_secret="4J8V6p3pAzjFuo1JqQErIFd6", scope="https://www.googleapis.com/auth/plus.me https://www.googleapis.com/auth/userinfo.email", redirect_uri="http://just.test.com:8080/redirect")
+	flow = OAuth2WebServerFlow(client_id="868973567211-me9um9qovn4u9qqc4o624pscvgllqlac.apps.googleusercontent.com", client_secret="4J8V6p3pAzjFuo1JqQErIFd6", scope="https://www.googleapis.com/auth/plus.me https://www.googleapis.com/auth/userinfo.email", redirect_uri="http://ec2-52-4-76-203.compute-1.amazonaws.com:8080/redirect")
 	credentials = flow.step2_exchange(code)
 	token = credentials.id_token['sub']
 
@@ -619,7 +646,7 @@ def redirect_page():
 	print "User Name: " + user_name
 	print "User Email: " + user_email
 
-	url = "http://192.168.0.109:8080/authorized?user_name=" + user_name + "&user_email=" + user_email
+	url = "http://52.4.76.203:8080/authorized?user_name=" + user_name + "&user_email=" + user_email
 	redirect(url)
 
 @route('/authorized')
